@@ -9,6 +9,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.backendless.Backendless;
+import com.backendless.BackendlessUser;
+import com.backendless.async.callback.AsyncCallback;
+import com.backendless.exceptions.BackendlessFault;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText username;
@@ -25,20 +30,43 @@ public class LoginActivity extends AppCompatActivity {
 
         wireWidgets();
 
+        //initialize Backendless connection
+        Backendless.initApp(this, Credentials.APP_ID, Credentials.API_KEY);
+
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(LoginActivity.this, "There's no login :P", Toast.LENGTH_SHORT).show();
+                loginToBackendless();
             }
         });
 
         signup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent sendusername = new Intent(LoginActivity.this, CreateAccountActivity.class);
+                Intent sendUsername = new Intent(LoginActivity.this, CreateAccountActivity.class);
                 String message = username.getText().toString();
-                sendusername.putExtra(EXTRA_USERNAME, message);
-                startActivity(sendusername);
+                sendUsername.putExtra(EXTRA_USERNAME, message);
+                startActivity(sendUsername);
+            }
+        });
+    }
+
+    private void loginToBackendless() {
+        String login = username.getText().toString();
+        String password = this.password.getText().toString();
+        Backendless.UserService.login(login, password, new AsyncCallback<BackendlessUser>() {
+            @Override
+            public void handleResponse(BackendlessUser response) {
+                //Start new activity here because this method called when login is complete + successful
+
+                Toast.makeText(LoginActivity.this, response.getEmail() + "Logged In", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(LoginActivity.this, RestaurantListActivity.class);
+                startActivity(intent);
+            }
+
+            @Override
+            public void handleFault(BackendlessFault fault) {
+                Toast.makeText(LoginActivity.this, fault.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
